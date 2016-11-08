@@ -49,7 +49,6 @@ int main(int argc , char *argv[])
 
     while(*message != 'q') {
 
-
         std::thread tokimot([&] {
             while(*message !='q') {
                 iresult = recv(s, server_reply, 2000, 0);
@@ -67,11 +66,15 @@ int main(int argc , char *argv[])
         std::thread sender([&] {
             while (*message!='q') {
             std::cin.getline(message, 1024);
-
-                iresult = send(s, message, strlen(message),0);
-                if (iresult < 0) {
-                    std::cout << "Send failed" << std::endl;
-                    return 1;
+                if(*message!='q') {
+                    iresult = send(s, message, strlen(message), 0);
+                    if (iresult < 0) {
+                        std::cout << "Send failed" << std::endl;
+                        return 1;
+                    }
+                }
+                else{
+                    std::cout << "Disconnecting..." << std::endl;
                 }
             }
         });
