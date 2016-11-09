@@ -12,6 +12,7 @@ int main(int argc , char *argv[])
     struct sockaddr_in server;
     char message[1024] , server_reply[2000];
     int recv_size, iresult;
+    bool run = true;
 
     printf("\nInitialising Winsock...");
     if (WSAStartup(MAKEWORD(2,2),&wsa) != 0)
@@ -47,14 +48,21 @@ int main(int argc , char *argv[])
 
     //Send some data
 
-    while(*message != 'q') {
+    while(run) {
 
         std::thread tokimot([&] {
-            while(*message !='q') {
+            while(run) {
                 iresult = recv(s, server_reply, 2000, 0);
                 if (iresult == SOCKET_ERROR) {
                     std::cout << "recv failed" << std::endl;
                     return 1;
+                }
+                if (iresult == 0){
+                    std::cout << "Server shutdown..." << std::endl;
+                    run = false;
+                    closesocket(s);
+                    WSACleanup();
+                    return 0;
                 }
 
                 //Add a NULL terminating character to make it a proper string before printing
@@ -64,8 +72,9 @@ int main(int argc , char *argv[])
         });
 
         std::thread sender([&] {
-            while (*message!='q') {
+            while (run) {
             std::cin.getline(message, 1024);
+
                 if(*message!='q') {
                     iresult = send(s, message, strlen(message), 0);
                     if (iresult < 0) {
@@ -75,6 +84,7 @@ int main(int argc , char *argv[])
                 }
                 else{
                     std::cout << "Disconnecting..." << std::endl;
+                    run = false;
                 }
             }
         });
